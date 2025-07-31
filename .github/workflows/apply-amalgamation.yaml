@@ -3,9 +3,6 @@ name: "Pastor: Apply(Amalgamation)"
 on:
   workflow_call:
     inputs:
-      kubeconfig:
-        required: true
-        type: string
       file:
         required: false
         type: string
@@ -14,6 +11,9 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      kubeconfig:
+        required: true
 
 jobs:
   apply:
@@ -30,7 +30,7 @@ jobs:
       - name: Configure Kube Config
         run: |
           mkdir -p ~/.kube
-          echo "${{ inputs.kubeconfig }}" > ~/.kube/config
+          echo "${{ secrets.kubeconfig }}" > ~/.kube/config
 
       - name: Apply to Kubernetes
         run: |
