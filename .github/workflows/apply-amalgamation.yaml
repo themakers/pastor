@@ -10,7 +10,7 @@ on:
       dry_run:
         required: false
         type: boolean
-        default: false
+        default: true
     secrets:
       kubeconfig:
         required: true
