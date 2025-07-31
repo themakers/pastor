@@ -1,0 +1,56 @@
+name: "Pastor: Apply(Amalgamation)"
+
+on:
+  workflow_call:
+    inputs:
+      kubeconfig:
+        required: true
+        type: string
+      file:
+        required: false
+        type: string
+        default: "amalgamation.gen.yaml"
+      dry_run:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "latest"
+
+      - name: Configure Kube Config
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ inputs.kubeconfig }}" > ~/.kube/config
+
+      - name: Apply to Kubernetes
+        run: |
+          apply() {
+            kubectl apply \
+              -f ${{ inputs.file }} \
+              --field-manager=pastor \
+              --prune -l "pastor/managed=true" \
+              "$@"
+          }
+
+          apply_all() {
+            apply -l "pastor/apply-stage=1" "$@"
+            apply -l "pastor/apply-stage=2" "$@"
+            apply -l "pastor/apply-stage=3" "$@"
+            apply -l "pastor/apply-stage=4" "$@"
+          }
+
+          if ${{ inputs.dry_run }}; then
+            apply_all --dry-run=server
+          else
+            apply_all
+          fi
